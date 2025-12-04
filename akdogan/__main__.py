@@ -2,17 +2,23 @@ import argparse
 import os
 from datetime import datetime
 from .snapshot import generate_snapshot
+import re
+
+def sanitize_filename(filename: str) -> str:
+    """
+    Remove invalid characters for Windows filenames
+    """
+    return re.sub(r'[\\/*?:"<>|]', "_", filename)
 
 def build_snapshot_name(path: str) -> str:
-    # Folder name
+    """
+    Build snapshot filename with folder name + timestamp + .txt
+    Safe for Windows and Mac.
+    """
     folder = os.path.basename(os.path.abspath(path))
-
-    # Date & time
-    now = datetime.now()
-    timestamp = now.strftime("%d.%m.%y-%H:%M")
-
-    # Final file name
-    return f"{folder}_{timestamp}.txt"
+    timestamp = datetime.now().strftime("%d-%m-%y_%H-%M")  # : yerine -
+    filename = f"{folder}_{timestamp}.txt"
+    return sanitize_filename(filename)
 
 def main():
     parser = argparse.ArgumentParser(description="Akdogan Snapshot Tool")
@@ -22,6 +28,10 @@ def main():
 
     # Build name automatically if user didn't specify one
     output_name = args.output if args.output else build_snapshot_name(args.path)
+
+    # Ensure .txt extension
+    if not output_name.lower().endswith(".txt"):
+        output_name += ".txt"
 
     print("[AKDOGAN] Generating snapshot...")
     generate_snapshot(args.path, output_name)
